@@ -156,7 +156,7 @@ export interface AdminActivityLog {
   action: string;
   targetType: string;
   targetId: string;
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   admin?: User;
 }

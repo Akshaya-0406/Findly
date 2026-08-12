@@ -1,23 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Search, Plus, MessageSquare, User as UserIcon, X, LogOut, Database } from "lucide-react";
+import { Home, Search, Plus, MessageSquare, User as UserIcon, X } from "lucide-react";
 import Button from "@/components/ui/button";
-import Badge from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
-import { dbService, DBClaim } from "@/lib/db";
-import { getInitials } from "@/lib/utils";
 
 export const MobileNav: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut, isSupabase } = useAuth();
+  const { user } = useAuth();
   
   const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [showMessagesOverlay, setShowMessagesOverlay] = useState(false);
-  const [userClaims, setUserClaims] = useState<DBClaim[]>([]);
 
   const navItems = [
     { name: "Home", href: "/", icon: Home },
@@ -26,21 +21,6 @@ export const MobileNav: React.FC = () => {
     { name: "Saved", href: "/saved", icon: MessageSquare, isSaved: true },
     { name: "Profile", href: "/profile", icon: UserIcon, isProfile: true },
   ];
-
-  useEffect(() => {
-    if (!user || !showMessagesOverlay) return;
-
-    const fetchClaims = async () => {
-      try {
-        const claims = await dbService.getClaimsByUser(user.id);
-        setUserClaims(claims);
-      } catch (err) {
-        console.error("Error loading user claims:", err);
-      }
-    };
-
-    fetchClaims();
-  }, [user, showMessagesOverlay]);
 
   const handleItemClick = (item: typeof navItems[0]) => {
     if (item.isAction) {

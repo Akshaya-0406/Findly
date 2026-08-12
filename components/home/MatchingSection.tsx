@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Check, CheckCircle2, ChevronRight, Laptop } from "lucide-react";
+import { Sparkles, Check, CheckCircle2, Laptop } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const MatchingSection: React.FC = () => {
@@ -78,7 +78,7 @@ export const MatchingSection: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-bold text-danger-600 uppercase tracking-wide">Reported Lost</div>
-                    <h4 className="text-xs font-bold text-neutral-800 truncate">"Black wireless earbuds"</h4>
+                    <h4 className="text-xs font-bold text-neutral-800 truncate">&quot;Black wireless earbuds&quot;</h4>
                     <span className="text-[9px] text-neutral-400">Lost near Campus Quad</span>
                   </div>
                 </div>
@@ -97,7 +97,7 @@ export const MatchingSection: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-bold text-accent-600 uppercase tracking-wide">Reported Found</div>
-                    <h4 className="text-xs font-bold text-neutral-800 truncate">"Black earbuds found near campus"</h4>
+                    <h4 className="text-xs font-bold text-neutral-800 truncate">&quot;Black earbuds found near campus&quot;</h4>
                     <span className="text-[9px] text-neutral-400">Found near Main Street Bus Stop</span>
                   </div>
                 </div>

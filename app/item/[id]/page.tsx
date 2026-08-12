@@ -106,7 +106,7 @@ export default function DynamicItemPage() {
     try {
       const conv = await dbService.getOrCreateConversation(item.id, user.id, item.reporter.id);
       router.push(`/messages/${conv.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error starting chat:", err);
     } finally {
       setIsStartingChat(false);

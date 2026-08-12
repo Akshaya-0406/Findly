@@ -50,8 +50,9 @@ export default function LoginPage() {
         } else {
           router.push("/");
         }
-      } catch (err: any) {
-        setErrorMessage(err.message || "An unexpected error occurred.");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+        setErrorMessage(msg);
       } finally {
         setIsSubmitting(false);
       }
@@ -76,8 +77,9 @@ export default function LoginPage() {
         await signIn("google-sso@university.edu", "google-sso-dummy-pass");
         router.push("/");
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Google sign-in error.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google sign-in error.";
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -202,7 +204,7 @@ export default function LoginPage() {
 
         {/* Signup redirection link */}
         <p className="text-center text-xs text-neutral-500 font-medium">
-          Don't have an account yet?{" "}
+          Don&apos;t have an account yet?{" "}
           <Link href="/signup" className="text-primary-600 hover:underline font-bold">
             Create Account
           </Link>

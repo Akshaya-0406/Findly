@@ -11,7 +11,6 @@ import {
   X,
   LogOut,
   User as UserIcon,
-  Database,
   LayoutDashboard,
   Package,
   Bookmark,
@@ -29,7 +28,7 @@ export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const { user, signOut, isSupabase } = useAuth();
+  const { user, signOut } = useAuth();
   const role = user?.role || "user";
 
   const navLinks = [

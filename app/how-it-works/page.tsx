@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ClipboardList, Search, Sparkles, ShieldCheck, HeartHandshake, Eye, ArrowRight } from "lucide-react";
+import { ClipboardList, Search, Sparkles, ShieldCheck, HeartHandshake, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "@/components/ui/button";
 import Link from "next/link";
@@ -39,7 +39,7 @@ export default function HowItWorksPage() {
       num: "04",
       title: "Private Ownership Verification",
       subtitle: "High Trust Claims",
-      desc: "Before any contact is made, claimants must submit security proof details. You might ask: 'What sticker is on the phone case?' or 'What is the lock screen wallpaper?' to ensure ownership before arranging handovers.",
+      desc: "Before any contact is made, claimants must submit security proof details. You might ask: &apos;What sticker is on the phone case?&apos; or &apos;What is the lock screen wallpaper?&apos; to ensure ownership before arranging handovers.",
       icon: ShieldCheck,
       color: "from-teal-500 to-emerald-600",
       accent: "bg-emerald-50 text-emerald-600 border-emerald-100",

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FileCheck, Search, Eye, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Eye } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
@@ -81,7 +81,7 @@ export default function AdminClaimsPage() {
                       {claim.status}
                     </Badge>
                   </div>
-                  <p className="text-xs text-neutral-400">"{claim.description}"</p>
+                  <p className="text-xs text-neutral-400">&quot;{claim.description}&quot;</p>
                   <p className="text-[10px] text-neutral-500">Submitted on {formatDate(claim.created_at)}</p>
                 </div>
 

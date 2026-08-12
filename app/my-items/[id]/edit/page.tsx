@@ -3,14 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Edit, AlertCircle, Save } from "lucide-react";
+import { ChevronLeft, AlertCircle, Save } from "lucide-react";
 import Input from "@/components/ui/input";
 import Select from "@/components/ui/select";
 import Button from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/demo-data";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db";
-import { Item } from "@/types";
 
 export default function EditItemPage() {
   const { id } = useParams() as { id: string };
@@ -55,7 +54,7 @@ export default function EditItemPage() {
         }
 
         if (item.reporter.id !== user.id) {
-          setErrorMessage("You don't have permission to edit this item.");
+          setErrorMessage("You don&apos;t have permission to edit this item.");
           return;
         }
 
@@ -115,8 +114,9 @@ export default function EditItemPage() {
       );
 
       router.push("/my-items");
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to update item.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update item.";
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }

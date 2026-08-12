@@ -114,7 +114,7 @@ export const Hero: React.FC = () => {
                         <span className="text-xs font-bold text-danger-600 uppercase tracking-wide">Lost Report</span>
                         <span className="text-[10px] text-neutral-400">Just now</span>
                       </div>
-                      <h4 className="text-sm font-bold text-neutral-800 truncate">MacBook Pro 14"</h4>
+                      <h4 className="text-sm font-bold text-neutral-800 truncate">MacBook Pro 14&quot;</h4>
                       <p className="text-xs text-neutral-400 flex items-center gap-1 mt-0.5">
                         <MapPin className="h-3 w-3" /> Central Library
                       </p>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Calendar, MapPin, Tag, ArrowUpDown, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import Input from "@/components/ui/input";
 import Select from "@/components/ui/select";
 import Button from "@/components/ui/button";
@@ -98,7 +98,7 @@ export const ItemFilters: React.FC<ItemFiltersProps> = ({
             <span>Active filters:</span>
             {filters.searchQuery && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-neutral-100 rounded-full">
-                "{filters.searchQuery}"
+                &quot;{filters.searchQuery}&quot;
               </span>
             )}
             {filters.category && (

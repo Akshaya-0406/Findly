@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Package, Search, Eye, Trash2, X } from "lucide-react";
+import { Search, Eye, Trash2, X } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
@@ -167,7 +167,7 @@ export default function AdminItemsPage() {
               </button>
             </div>
             <p className="text-xs text-neutral-300 leading-relaxed">
-              Are you sure you want to remove <strong>"{deleteTarget.title}"</strong>?
+              Are you sure you want to remove <strong>&quot;{deleteTarget.title}&quot;</strong>?
             </p>
             <div className="grid grid-cols-2 gap-3 pt-2">
               <Button variant="outline" className="border-neutral-800 text-neutral-300" onClick={() => setDeleteTarget(null)}>

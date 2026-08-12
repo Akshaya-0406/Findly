@@ -58,7 +58,7 @@ export default function Home() {
                 Recently Lost Items
               </h3>
               <p className="text-sm text-neutral-500 max-w-xl">
-                Help someone find what they've lost. These items were reported missing recently in our community areas.
+                Help someone find what they&apos;ve lost. These items were reported missing recently in our community areas.
               </p>
             </div>
             

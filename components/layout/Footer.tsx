@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
           <div className="space-y-4 md:col-span-1">
             <Logo size="md" />
             <p className="text-sm text-neutral-500 max-w-xs leading-relaxed">
-              "Lost something? Find it again." Report lost items, discover things others have found, and reconnect safely.
+              &quot;Lost something? Find it again.&quot; Report lost items, discover things others have found, and reconnect safely.
             </p>
           </div>
 

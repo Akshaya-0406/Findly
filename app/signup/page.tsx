@@ -59,8 +59,9 @@ export default function SignupPage() {
         } else {
           router.push("/");
         }
-      } catch (err: any) {
-        setErrorMessage(err.message || "An unexpected registration error occurred.");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "An unexpected registration error occurred.";
+        setErrorMessage(msg);
       } finally {
         setIsSubmitting(false);
       }
@@ -85,8 +86,9 @@ export default function SignupPage() {
         await signUp("SSO User", "sso-login@university.edu", "google-sso-dummy-pass");
         router.push("/");
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || "Google sign-in error.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google sign-in error.";
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }

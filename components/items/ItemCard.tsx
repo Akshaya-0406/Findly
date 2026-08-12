@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -37,18 +37,14 @@ interface ItemCardProps {
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onSaveToggle }) => {
   const router = useRouter();
   const { user } = useAuth();
-  const [isSaved, setIsSaved] = useState(item.isSaved || false);
+  const [isSavedOverride, setIsSavedOverride] = useState<boolean | null>(null);
+  const isSaved = isSavedOverride !== null ? isSavedOverride : Boolean(item.isSaved);
   const [isSaving, setIsSaving] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
-
-  useEffect(() => {
-    setIsSaved(item.isSaved || false);
-  }, [item.isSaved]);
 
   const primaryImage = item.imageUrl || (item.images && item.images.length > 0 ? item.images[0].publicUrl : undefined);
   const itemType = item.type || (item.status === "found" ? "found" : "lost");
   const isReturned = item.status === "returned";
-  const isReporter = user?.id === item.reporter.id;
 
   const handleSaveClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -60,7 +56,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSaveToggle }) => {
     }
 
     const nextState = !isSaved;
-    setIsSaved(nextState);
+    setIsSavedOverride(nextState);
     setIsSaving(true);
 
     try {
@@ -72,9 +68,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSaveToggle }) => {
       if (onSaveToggle) {
         onSaveToggle(item.id, nextState);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Save item error:", err);
-      setIsSaved(!nextState);
+      setIsSavedOverride(!nextState);
     } finally {
       setIsSaving(false);
     }
@@ -89,16 +85,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSaveToggle }) => {
       return;
     }
 
-    if (isReporter) {
-      router.push("/messages");
-      return;
-    }
-
     setIsStartingChat(true);
     try {
       const conv = await dbService.getOrCreateConversation(item.id, user.id, item.reporter.id);
       router.push(`/messages/${conv.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error starting chat:", err);
     } finally {
       setIsStartingChat(false);

@@ -10,7 +10,6 @@ import {
   Edit,
   Trash2,
   CheckCircle2,
-  AlertTriangle,
   X,
   Calendar,
   MapPin
@@ -260,7 +259,7 @@ export default function MyItemsPage() {
               </button>
             </div>
             <p className="text-xs text-neutral-500 leading-relaxed">
-              Are you sure you want to delete <strong>"{deleteTarget.title}"</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>&quot;{deleteTarget.title}&quot;</strong>? This action cannot be undone.
             </p>
             <div className="grid grid-cols-2 gap-3 pt-2">
               <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
@@ -283,7 +282,7 @@ export default function MyItemsPage() {
               </button>
             </div>
             <p className="text-xs text-neutral-500 leading-relaxed">
-              Marking <strong>"{returnedTarget.title}"</strong> as returned will update its status to Returned and remove it from active search feeds.
+              Marking <strong>&quot;{returnedTarget.title}&quot;</strong> as returned will update its status to Returned and remove it from active search feeds.
             </p>
             <div className="grid grid-cols-2 gap-3 pt-2">
               <Button variant="outline" onClick={() => setReturnedTarget(null)}>Not Yet</Button>

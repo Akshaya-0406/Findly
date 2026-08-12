@@ -1,6 +1,8 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import {
   Item,
+  ItemType,
+  ItemState,
   ItemImage,
   SavedItem,
   FilterState,
@@ -9,6 +11,7 @@ import {
   Conversation,
   Message,
   Report,
+  ReportStatus,
   BlockedUser,
   Category,
   AdminActivityLog,
@@ -16,9 +19,6 @@ import {
   AnalyticsData,
   UserRole
 } from "../types";
-import { DEMO_USERS } from "./demo-data";
-
-const DEMO_USERS_ARRAY: User[] = Object.values(DEMO_USERS);
 
 export interface DBClaim {
   id: string;
@@ -42,7 +42,7 @@ const getLocalStorageData = <T>(key: string, defaultValue: T): T => {
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
-  } catch (e) {
+  } catch {
     return defaultValue;
   }
 };
@@ -51,7 +51,7 @@ const setLocalStorageData = <T>(key: string, value: T): void => {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {}
+  } catch {}
 };
 
 const initLocalStorage = () => {
@@ -104,56 +104,58 @@ const initLocalStorage = () => {
   }
 };
 
-const mapDbRowToItem = (row: any): Item => {
-  const images: ItemImage[] = (row.images || row.item_images || []).map((img: any) => ({
-    id: img.id,
-    itemId: img.item_id || row.id,
-    storagePath: img.storage_path,
-    publicUrl: img.public_url,
-    displayOrder: img.display_order ?? 0,
-    createdAt: img.created_at,
+const mapDbRowToItem = (row: Record<string, unknown>): Item => {
+  const imagesRaw = (row.images || row.item_images || []) as Record<string, unknown>[];
+  const images: ItemImage[] = imagesRaw.map((img: Record<string, unknown>) => ({
+    id: String(img.id || ""),
+    itemId: String(img.item_id || row.id || ""),
+    storagePath: String(img.storage_path || ""),
+    publicUrl: String(img.public_url || ""),
+    displayOrder: typeof img.display_order === "number" ? img.display_order : 0,
+    createdAt: String(img.created_at || ""),
   })).sort((a: ItemImage, b: ItemImage) => a.displayOrder - b.displayOrder);
 
-  const primaryImageUrl = images.length > 0 ? images[0].publicUrl : (row.image_url || undefined);
+  const primaryImageUrl = images.length > 0 ? images[0].publicUrl : (typeof row.image_url === "string" ? row.image_url : undefined);
+  const reporterRaw = row.reporter as Record<string, unknown> | undefined;
 
   return {
-    id: row.id,
-    type: row.type || (row.status === "found" ? "found" : "lost"),
-    status: row.status || "active",
-    title: row.title,
-    description: row.description,
-    category: row.category,
-    city: row.city || "Chennai",
-    area: row.area || row.location || "General Area",
-    location: row.location || `${row.area || ''}, ${row.city || ''}`.trim(),
-    latitude: row.latitude ? parseFloat(row.latitude) : undefined,
-    longitude: row.longitude ? parseFloat(row.longitude) : undefined,
-    date: row.date,
-    time: row.time || undefined,
-    color: row.color || undefined,
-    brand: row.brand || undefined,
-    model: row.model || undefined,
-    identifyingFeatures: row.identifying_features || undefined,
-    reward: row.reward ? parseFloat(row.reward) : undefined,
-    additionalNotes: row.additional_notes || undefined,
+    id: String(row.id || ""),
+    type: (row.type as ItemType) || (row.status === "found" ? "found" : "lost"),
+    status: (row.status as ItemState) || "active",
+    title: String(row.title || ""),
+    description: String(row.description || ""),
+    category: String(row.category || "Other"),
+    city: String(row.city || "Chennai"),
+    area: String(row.area || row.location || "General Area"),
+    location: String(row.location || `${row.area || ''}, ${row.city || ''}`.trim()),
+    latitude: row.latitude ? parseFloat(String(row.latitude)) : undefined,
+    longitude: row.longitude ? parseFloat(String(row.longitude)) : undefined,
+    date: String(row.date || ""),
+    time: row.time ? String(row.time) : undefined,
+    color: row.color ? String(row.color) : undefined,
+    brand: row.brand ? String(row.brand) : undefined,
+    model: row.model ? String(row.model) : undefined,
+    identifyingFeatures: row.identifying_features ? String(row.identifying_features) : undefined,
+    reward: row.reward ? parseFloat(String(row.reward)) : undefined,
+    additionalNotes: row.additional_notes ? String(row.additional_notes) : undefined,
     imageUrl: primaryImageUrl,
     images: images,
-    reporter: row.reporter ? {
-      id: row.reporter.id,
-      name: row.reporter.name || "Community Member",
-      avatarUrl: row.reporter.avatar_url || undefined,
-      role: row.reporter.role || "user",
-      isSuspended: row.reporter.is_suspended || false,
-      suspendedUntil: row.reporter.suspended_until || undefined,
-      suspensionReason: row.reporter.suspension_reason || undefined,
-      memberSince: row.reporter.created_at ? new Date(row.reporter.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long" }) : "Member",
+    reporter: reporterRaw ? {
+      id: String(reporterRaw.id || ""),
+      name: String(reporterRaw.name || "Community Member"),
+      avatarUrl: reporterRaw.avatar_url ? String(reporterRaw.avatar_url) : undefined,
+      role: (reporterRaw.role as UserRole) || "user",
+      isSuspended: Boolean(reporterRaw.is_suspended),
+      suspendedUntil: reporterRaw.suspended_until ? String(reporterRaw.suspended_until) : undefined,
+      suspensionReason: reporterRaw.suspension_reason ? String(reporterRaw.suspension_reason) : undefined,
+      memberSince: reporterRaw.created_at ? new Date(String(reporterRaw.created_at)).toLocaleDateString("en-US", { year: "numeric", month: "long" }) : "Member",
     } : {
-      id: row.reporter_id || "unknown",
+      id: String(row.reporter_id || "unknown"),
       name: "Community Member",
       memberSince: "Member",
     },
-    resolvedAt: row.resolved_at || undefined,
-    createdAt: row.created_at || row.date,
+    resolvedAt: row.resolved_at ? String(row.resolved_at) : undefined,
+    createdAt: String(row.created_at || row.date || ""),
   };
 };
 
@@ -301,17 +303,14 @@ export const dbService = {
         return q;
       };
 
-      // Attempt 1: Query with type column & item_images join
       let { data, error } = await buildQuery("*, reporter:profiles(*), images:item_images(*)", true);
 
-      // Attempt 2: Query without item_images join
       if (error) {
         const fallbackRes = await buildQuery("*, reporter:profiles(*)", true);
         if (!fallbackRes.error && fallbackRes.data) {
           data = fallbackRes.data;
           error = null;
         } else if (fallbackRes.error) {
-          // Attempt 3: Query using status fallback (if type column missing in DB schema cache)
           const fallbackRes2 = await buildQuery("*, reporter:profiles(*)", false);
           if (!fallbackRes2.error && fallbackRes2.data) {
             data = fallbackRes2.data;
@@ -320,9 +319,7 @@ export const dbService = {
         }
       }
 
-      if (error || !data) return this.getLocalStorageItems(filters);
-
-      const items = (data || []).map(mapDbRowToItem);
+      const items = ((data as unknown as Record<string, unknown>[]) || []).map(mapDbRowToItem);
       return items;
     } else {
       return this.getLocalStorageItems(filters);
@@ -353,7 +350,7 @@ export const dbService = {
         return localItems.find((i) => i.id === id) || null;
       }
 
-      const item = mapDbRowToItem(data);
+      const item = mapDbRowToItem(data as Record<string, unknown>);
       if (userId) item.isSaved = await this.isItemSaved(id, userId);
       return item;
     } else {
@@ -377,7 +374,7 @@ export const dbService = {
         const localItems = this.getLocalStorageItems();
         return localItems.filter((i) => i.reporter.id === userId);
       }
-      return (data as any[]).map(mapDbRowToItem);
+      return (data as Record<string, unknown>[]).map(mapDbRowToItem);
     } else {
       const allItems = await this.getItems();
       let userItems = allItems.filter((i) => i.reporter.id === userId);
@@ -390,7 +387,7 @@ export const dbService = {
     }
   },
 
-  async getDashboardStats(userId?: string) {
+  async getDashboardStats(_userId?: string) {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
@@ -404,7 +401,7 @@ export const dbService = {
           itemsReturned: returnedCount || 0,
           potentialMatches: 0,
         };
-      } catch (e) {
+      } catch {
         return { itemsLost: 0, itemsFound: 0, itemsReturned: 0, potentialMatches: 0 };
       }
     } else {
@@ -427,7 +424,7 @@ export const dbService = {
         const { count: foundCount } = await client.from("items").select("*", { count: "exact", head: true }).eq("reporter_id", userId).or("type.eq.found,status.eq.found");
         const { count: returnedCount } = await client.from("items").select("*", { count: "exact", head: true }).eq("reporter_id", userId).eq("status", "returned");
         return { lostReports: lostCount || 0, foundReports: foundCount || 0, returnedItems: returnedCount || 0 };
-      } catch (e) {
+      } catch {
         return { lostReports: 0, foundReports: 0, returnedItems: 0 };
       }
     } else {
@@ -453,7 +450,7 @@ export const dbService = {
 
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
-      const fullPayload: any = {
+      const fullPayload: Record<string, unknown> = {
         title: itemData.title,
         description: itemData.description,
         category: itemData.category,
@@ -488,7 +485,7 @@ export const dbService = {
       }
 
       if (error || !data) throw error || new Error("Failed to create item.");
-      createdItem = mapDbRowToItem(data);
+      createdItem = mapDbRowToItem(data as Record<string, unknown>);
 
       if (imageFiles && imageFiles.length > 0) {
         const uploaded = await this.uploadItemImages(imageFiles, createdItem.id);
@@ -505,7 +502,6 @@ export const dbService = {
       };
     }
 
-    // Sync created item into LocalStorage findly_items as well
     const localItems: Item[] = getLocalStorageData("findly_items", []);
     localItems.unshift(createdItem);
     setLocalStorageData("findly_items", localItems);
@@ -513,7 +509,7 @@ export const dbService = {
     return createdItem;
   },
 
-  async updateItem(id: string, itemData: Partial<Item>, reporterId: string): Promise<Item> {
+  async updateItem(id: string, itemData: Partial<Item>, _reporterId?: string): Promise<Item> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
@@ -532,9 +528,8 @@ export const dbService = {
         .single();
 
       if (error) throw error;
-      const updated = mapDbRowToItem(data);
+      const updated = mapDbRowToItem(data as Record<string, unknown>);
 
-      // Sync local storage
       const localItems: Item[] = getLocalStorageData("findly_items", []);
       const idx = localItems.findIndex(i => i.id === id);
       if (idx !== -1) {
@@ -555,7 +550,7 @@ export const dbService = {
     }
   },
 
-  async deleteItem(id: string, reporterId: string): Promise<void> {
+  async deleteItem(id: string, _reporterId?: string): Promise<void> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
@@ -566,7 +561,7 @@ export const dbService = {
     setLocalStorageData("findly_items", items);
   },
 
-  async markAsReturned(id: string, reporterId: string): Promise<void> {
+  async markAsReturned(id: string, _reporterId?: string): Promise<void> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
@@ -580,7 +575,6 @@ export const dbService = {
     }
   },
 
-  // CLAIMS SERVICES
   async createClaim(itemId: string, claimantId: string, description: string): Promise<DBClaim> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
@@ -639,11 +633,10 @@ export const dbService = {
     }
   },
 
-  async getMatchesForItem(itemId: string): Promise<MatchResult[]> {
+  async getMatchesForItem(_itemId: string): Promise<MatchResult[]> {
     return [];
   },
 
-  // SAVED ITEMS
   async saveItem(itemId: string, userId: string): Promise<void> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
@@ -683,8 +676,8 @@ export const dbService = {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase!.from("saved_items").select(`item:items(*, reporter:profiles(*))`).eq("user_id", userId);
-      const rows = (data || []).map((r: any) => r.item).filter(Boolean);
-      return rows.map(mapDbRowToItem);
+      const rows = ((data || []) as Record<string, unknown>[]).map((r) => r.item).filter(Boolean);
+      return rows.map((row) => mapDbRowToItem(row as Record<string, unknown>));
     } else {
       const saved: SavedItem[] = getLocalStorageData("findly_saved_items", []);
       const userSaved = saved.filter((s) => s.userId === userId);
@@ -693,13 +686,12 @@ export const dbService = {
     }
   },
 
-  // MESSAGING & CONVERSATIONS API
   async getConversations(userId: string): Promise<Conversation[]> {
     initLocalStorage();
 
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
-      let rows: any[] = [];
+      let rows: Record<string, unknown>[] = [];
 
       try {
         const { data, error } = await client
@@ -709,16 +701,16 @@ export const dbService = {
           .order("updated_at", { ascending: false });
 
         if (!error && data) {
-          rows = data;
+          rows = data as Record<string, unknown>[];
         } else {
           const { data: fallbackData } = await client
             .from("conversations")
             .select(`*`)
             .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
             .order("updated_at", { ascending: false });
-          rows = fallbackData || [];
+          rows = (fallbackData || []) as Record<string, unknown>[];
         }
-      } catch (e) {
+      } catch {
         return this.getLocalStorageConversations(userId);
       }
 
@@ -727,7 +719,9 @@ export const dbService = {
 
       const conversations: Conversation[] = [];
       for (const row of rows) {
-        const otherId = row.participant_1 === userId ? row.participant_2 : row.participant_1;
+        const p1 = String(row.participant_1 || "");
+        const p2 = String(row.participant_2 || "");
+        const otherId = p1 === userId ? p2 : p1;
 
         let otherPart: User = { id: otherId || "community", name: "Community Member", memberSince: "Member" };
         try {
@@ -735,17 +729,17 @@ export const dbService = {
           if (profile) {
             otherPart = { id: profile.id, name: profile.name || "Community Member", avatarUrl: profile.avatar_url, memberSince: "Member" };
           }
-        } catch (e) {}
+        } catch {}
 
         let lastMessageText = "Conversation started";
-        let lastMessageAt = row.updated_at || row.created_at;
+        let lastMessageAt = String(row.updated_at || row.created_at || "");
         let unreadCount = 0;
 
         try {
           const { data: msgData } = await client
             .from("messages")
             .select("*")
-            .eq("conversation_id", row.id)
+            .eq("conversation_id", String(row.id))
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -758,28 +752,27 @@ export const dbService = {
           const { count } = await client
             .from("messages")
             .select("*", { count: "exact", head: true })
-            .eq("conversation_id", row.id)
+            .eq("conversation_id", String(row.id))
             .neq("sender_id", userId)
             .is("read_at", null);
           unreadCount = count || 0;
-        } catch (e) {}
+        } catch {}
 
         conversations.push({
-          id: row.id,
-          itemId: row.item_id,
-          participant1: { id: row.participant_1, name: "User", memberSince: "Member" },
-          participant2: { id: row.participant_2, name: "User", memberSince: "Member" },
+          id: String(row.id),
+          itemId: row.item_id ? String(row.item_id) : undefined,
+          participant1: { id: p1, name: "User", memberSince: "Member" },
+          participant2: { id: p2, name: "User", memberSince: "Member" },
           otherParticipant: otherPart,
           lastMessage: lastMessageText,
           lastMessageAt: lastMessageAt,
           unreadCount: unreadCount,
-          createdAt: row.created_at,
-          updatedAt: row.updated_at,
-          item: row.item ? mapDbRowToItem(row.item) : undefined,
+          createdAt: String(row.created_at || ""),
+          updatedAt: String(row.updated_at || ""),
+          item: row.item ? mapDbRowToItem(row.item as Record<string, unknown>) : undefined,
         });
       }
 
-      // Merge with local storage convs
       localConvs.forEach(lc => {
         if (!conversations.some(c => c.id === lc.id)) conversations.push(lc);
       });
@@ -828,7 +821,7 @@ export const dbService = {
             otherParticipant: { id: partnerId, name: "Listing Reporter", memberSince: "Member" },
             createdAt: existing.created_at,
             updatedAt: existing.updated_at,
-            item: existing.item ? mapDbRowToItem(existing.item) : undefined,
+            item: existing.item ? mapDbRowToItem(existing.item as Record<string, unknown>) : undefined,
           };
           return conv;
         }
@@ -914,17 +907,20 @@ export const dbService = {
         }
 
         if (data && data.length > 0) {
-          dbMsgs = (data as any[]).map((row) => ({
-            id: row.id,
-            conversationId: row.conversation_id,
-            senderId: row.sender_id,
-            message: row.message,
-            createdAt: row.created_at,
-            readAt: row.read_at || undefined,
-            sender: row.sender ? { id: row.sender.id, name: row.sender.name, avatarUrl: row.sender.avatar_url, memberSince: "Member" } : undefined,
-          }));
+          dbMsgs = (data as Record<string, unknown>[]).map((row) => {
+            const senderRaw = row.sender as Record<string, unknown> | undefined;
+            return {
+              id: String(row.id),
+              conversationId: String(row.conversation_id),
+              senderId: String(row.sender_id),
+              message: String(row.message),
+              createdAt: String(row.created_at),
+              readAt: row.read_at ? String(row.read_at) : undefined,
+              sender: senderRaw ? { id: String(senderRaw.id), name: String(senderRaw.name || "User"), avatarUrl: senderRaw.avatar_url ? String(senderRaw.avatar_url) : undefined, memberSince: "Member" } : undefined,
+            };
+          });
         }
-      } catch (e) {}
+      } catch {}
 
       const localMsgs = this.getLocalStorageMessages(conversationId);
       const combined = [...dbMsgs];
@@ -990,15 +986,16 @@ export const dbService = {
 
         if (data) {
           await client.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+          const senderRaw = data.sender as Record<string, unknown> | undefined;
 
           sentMsg = {
-            id: data.id,
-            conversationId: data.conversation_id,
-            senderId: data.sender_id,
-            message: data.message,
-            createdAt: data.created_at,
-            readAt: data.read_at || undefined,
-            sender: data.sender ? { id: data.sender.id, name: data.sender.name, avatarUrl: data.sender.avatar_url, memberSince: "Member" } : undefined,
+            id: String(data.id),
+            conversationId: String(data.conversation_id),
+            senderId: String(data.sender_id),
+            message: String(data.message),
+            createdAt: String(data.created_at),
+            readAt: data.read_at ? String(data.read_at) : undefined,
+            sender: senderRaw ? { id: String(senderRaw.id), name: String(senderRaw.name || "User"), avatarUrl: senderRaw.avatar_url ? String(senderRaw.avatar_url) : undefined, memberSince: "Member" } : undefined,
           };
         }
       } catch (e) {
@@ -1016,7 +1013,6 @@ export const dbService = {
       };
     }
 
-    // Always sync sent message into LocalStorage
     const msgs: Message[] = getLocalStorageData("findly_messages", []);
     msgs.push(sentMsg);
     setLocalStorageData("findly_messages", msgs);
@@ -1059,14 +1055,14 @@ export const dbService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           (payload) => {
-            const raw = payload.new as any;
+            const raw = payload.new as Record<string, unknown>;
             callback({
-              id: raw.id,
-              conversationId: raw.conversation_id,
-              senderId: raw.sender_id,
-              message: raw.message,
-              createdAt: raw.created_at,
-              readAt: raw.read_at || undefined,
+              id: String(raw.id || ""),
+              conversationId: String(raw.conversation_id || ""),
+              senderId: String(raw.sender_id || ""),
+              message: String(raw.message || ""),
+              createdAt: String(raw.created_at || ""),
+              readAt: raw.read_at ? String(raw.read_at) : undefined,
             });
           }
         )
@@ -1092,7 +1088,6 @@ export const dbService = {
     }
   },
 
-  // REPORTING & BLOCKING API
   async createReport(
     reporterId: string,
     targetType: "item" | "user" | "lost" | "found",
@@ -1104,7 +1099,7 @@ export const dbService = {
 
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         reporter_id: reporterId,
         reason,
         description: description || null,
@@ -1117,14 +1112,14 @@ export const dbService = {
       if (error || !data) throw error || new Error("Failed to submit report.");
 
       return {
-        id: data.id,
-        reporterId: data.reporter_id,
-        itemId: data.item_id,
-        reportedUserId: data.reported_user_id,
-        reason: data.reason,
-        description: data.description,
-        status: data.status,
-        createdAt: data.created_at,
+        id: String(data.id),
+        reporterId: String(data.reporter_id),
+        itemId: data.item_id ? String(data.item_id) : undefined,
+        reportedUserId: data.reported_user_id ? String(data.reported_user_id) : undefined,
+        reason: String(data.reason),
+        description: data.description ? String(data.description) : undefined,
+        status: (data.status as ReportStatus) || "pending",
+        createdAt: String(data.created_at),
       };
     } else {
       const reports: Report[] = getLocalStorageData("findly_reports", []);
@@ -1185,7 +1180,6 @@ export const dbService = {
     }
   },
 
-  // MODERATOR & ADMIN API
   async getReports(statusFilter?: string): Promise<Report[]> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
@@ -1202,20 +1196,24 @@ export const dbService = {
 
       const { data, error } = await q;
       if (error || !data) return getLocalStorageData("findly_reports", []);
-      return (data as any[]).map(r => ({
-        id: r.id,
-        reporterId: r.reporter_id,
-        itemId: r.item_id,
-        reportedUserId: r.reported_user_id,
-        reason: r.reason,
-        description: r.description,
-        status: r.status,
-        reviewerId: r.reviewer_id,
-        createdAt: r.created_at,
-        resolvedAt: r.resolved_at,
-        item: r.item ? mapDbRowToItem(r.item) : undefined,
-        reporter: r.reporter ? { id: r.reporter.id, name: r.reporter.name, avatarUrl: r.reporter.avatar_url, memberSince: "Member" } : undefined,
-      }));
+      return (data as Record<string, unknown>[]).map(r => {
+        const itemRaw = r.item as Record<string, unknown> | undefined;
+        const reporterRaw = r.reporter as Record<string, unknown> | undefined;
+        return {
+          id: String(r.id),
+          reporterId: String(r.reporter_id),
+          itemId: r.item_id ? String(r.item_id) : undefined,
+          reportedUserId: r.reported_user_id ? String(r.reported_user_id) : undefined,
+          reason: String(r.reason),
+          description: r.description ? String(r.description) : undefined,
+          status: (r.status as ReportStatus) || "pending",
+          reviewerId: r.reviewer_id ? String(r.reviewer_id) : undefined,
+          createdAt: String(r.created_at),
+          resolvedAt: r.resolved_at ? String(r.resolved_at) : undefined,
+          item: itemRaw ? mapDbRowToItem(itemRaw) : undefined,
+          reporter: reporterRaw ? { id: String(reporterRaw.id), name: String(reporterRaw.name), avatarUrl: reporterRaw.avatar_url ? String(reporterRaw.avatar_url) : undefined, memberSince: "Member" } : undefined,
+        };
+      });
     } else {
       const reports: Report[] = getLocalStorageData("findly_reports", []);
       if (statusFilter && statusFilter !== "all") return reports.filter(r => r.status === statusFilter);
@@ -1295,7 +1293,7 @@ export const dbService = {
     }
   },
 
-  async getAnalyticsData(period: string = "30d"): Promise<AnalyticsData> {
+  async getAnalyticsData(_period: string = "30d"): Promise<AnalyticsData> {
     const stats = await this.getAdminStats();
     return {
       userGrowth: [
@@ -1350,16 +1348,16 @@ export const dbService = {
       const { data, error } = await client.from("profiles").select("*").order("created_at", { ascending: false });
 
       if (error || !data) return getLocalStorageData("findly_users", []);
-      return (data as any[]).map(row => ({
-        id: row.id,
-        name: row.name,
-        avatarUrl: row.avatar_url || undefined,
-        role: row.role || "user",
-        isSuspended: row.is_suspended || false,
-        suspendedUntil: row.suspended_until || undefined,
-        suspensionReason: row.suspension_reason || undefined,
-        memberSince: row.created_at ? new Date(row.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long" }) : "Member",
-        createdAt: row.created_at,
+      return (data as Record<string, unknown>[]).map(row => ({
+        id: String(row.id),
+        name: String(row.name),
+        avatarUrl: row.avatar_url ? String(row.avatar_url) : undefined,
+        role: (row.role as UserRole) || "user",
+        isSuspended: Boolean(row.is_suspended),
+        suspendedUntil: row.suspended_until ? String(row.suspended_until) : undefined,
+        suspensionReason: row.suspension_reason ? String(row.suspension_reason) : undefined,
+        memberSince: row.created_at ? new Date(String(row.created_at)).toLocaleDateString("en-US", { year: "numeric", month: "long" }) : "Member",
+        createdAt: String(row.created_at || ""),
       }));
     } else {
       return getLocalStorageData("findly_users", []);
@@ -1420,7 +1418,7 @@ export const dbService = {
 
       const { data, error } = await q;
       if (error || !data || data.length === 0) return getLocalStorageData("findly_categories", []);
-      return (data as any[]).map(c => ({ id: c.id, name: c.name, icon: c.icon, isActive: c.is_active, createdAt: c.created_at }));
+      return (data as Record<string, unknown>[]).map(c => ({ id: String(c.id), name: String(c.name), icon: c.icon ? String(c.icon) : undefined, isActive: Boolean(c.is_active), createdAt: c.created_at ? String(c.created_at) : undefined }));
     } else {
       const cats: Category[] = getLocalStorageData("findly_categories", []);
       if (!includeInactive) return cats.filter(c => c.isActive);
@@ -1449,7 +1447,7 @@ export const dbService = {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       const client = supabase!;
-      const payload: any = {};
+      const payload: Record<string, unknown> = {};
       if (updates.name) payload.name = updates.name;
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
       await client.from("categories").update(payload).eq("id", id);
@@ -1470,22 +1468,25 @@ export const dbService = {
       const client = supabase!;
       const { data, error } = await client.from("admin_activity_logs").select(`*, admin:profiles(*)`).order("created_at", { ascending: false });
       if (error || !data) return getLocalStorageData("findly_activity_logs", []);
-      return (data as any[]).map(l => ({
-        id: l.id,
-        adminId: l.admin_id,
-        action: l.action,
-        targetType: l.target_type,
-        targetId: l.target_id,
-        metadata: l.metadata,
-        createdAt: l.created_at,
-        admin: l.admin ? { id: l.admin.id, name: l.admin.name, avatarUrl: l.admin.avatar_url, memberSince: "Member" } : undefined,
-      }));
+      return (data as Record<string, unknown>[]).map(l => {
+        const adminRaw = l.admin as Record<string, unknown> | undefined;
+        return {
+          id: String(l.id),
+          adminId: String(l.admin_id),
+          action: String(l.action),
+          targetType: String(l.target_type),
+          targetId: String(l.target_id),
+          metadata: (l.metadata as Record<string, unknown> | null) || null,
+          createdAt: String(l.created_at),
+          admin: adminRaw ? { id: String(adminRaw.id), name: String(adminRaw.name), avatarUrl: adminRaw.avatar_url ? String(adminRaw.avatar_url) : undefined, memberSince: "Member" } : undefined,
+        };
+      });
     } else {
       return getLocalStorageData("findly_activity_logs", []);
     }
   },
 
-  async logAdminActivity(adminId: string, action: string, targetType: string, targetId: string, metadata?: any): Promise<void> {
+  async logAdminActivity(adminId: string, action: string, targetType: string, targetId: string, metadata?: Record<string, unknown> | null): Promise<void> {
     initLocalStorage();
     if (isSupabaseConfigured && supabase) {
       await supabase!.from("admin_activity_logs").insert({

@@ -240,7 +240,7 @@ export default function ItemDemoPage() {
                 Potential match detected (87% match score)
               </h4>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                A finder reported a pair of "Black wireless earbuds" at the Central Library on the same day you lost yours. The items share the same category, location, and color attributes.
+                A finder reported a pair of &quot;Black wireless earbuds&quot; at the Central Library on the same day you lost yours. The items share the same category, location, and color attributes.
               </p>
             </div>
             

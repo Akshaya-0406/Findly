@@ -109,7 +109,7 @@ function LostItemsContent() {
               Lost Items
             </h1>
             <p className="text-sm text-neutral-500 max-w-xl">
-              Help someone find what they've lost. Browse active reports, check matching details, and reconnect owners.
+              Help someone find what they&apos;ve lost. Browse active reports, check matching details, and reconnect owners.
             </p>
           </div>
 

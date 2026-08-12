@@ -72,9 +72,10 @@ export default function SingleConversationPage() {
           setPartnerName(p.name);
           setPartnerId(p.id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error loading chat:", err);
-        setErrorMessage(err.message || "Failed to load conversation.");
+        const msg = err instanceof Error ? err.message : "Failed to load conversation.";
+        setErrorMessage(msg);
       } finally {
         setIsLoading(false);
         setTimeout(scrollToBottom, 100);
@@ -114,8 +115,9 @@ export default function SingleConversationPage() {
         return [...prev, createdMsg];
       });
       setTimeout(scrollToBottom, 100);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to send message.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to send message.";
+      setErrorMessage(msg);
       setNewMessageText(trimmed); // Restore text on error
     } finally {
       setIsSending(false);
@@ -136,8 +138,9 @@ export default function SingleConversationPage() {
       await dbService.blockUser(user.id, partnerId);
       setShowBlockModal(false);
       router.push("/messages");
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to block user.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to block user.";
+      setErrorMessage(msg);
     } finally {
       setIsBlocking(false);
     }

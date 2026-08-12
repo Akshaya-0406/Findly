@@ -12,18 +12,13 @@ import {
   AlertCircle,
   ShieldAlert,
   Info,
-  Calendar,
-  MapPin,
-  Tag,
   DollarSign,
-  FileText,
-  Sparkles,
   Laptop
 } from "lucide-react";
 import Input from "@/components/ui/input";
 import Select from "@/components/ui/select";
 import Button from "@/components/ui/button";
-import { CATEGORIES, LOCATIONS } from "@/lib/demo-data";
+import { CATEGORIES } from "@/lib/demo-data";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db";
 import { Item, ItemType } from "@/types";
@@ -169,7 +164,7 @@ export const MultiStepReportForm: React.FC<MultiStepReportFormProps> = ({ type }
 
     if (!parsed.success) {
       const formattedErrors: Record<string, string> = {};
-      parsed.error.issues.forEach((err: any) => {
+      parsed.error.issues.forEach((err: { path: (string | number | symbol)[]; message: string }) => {
         if (err.path[0]) {
           formattedErrors[err.path[0].toString()] = err.message;
         }
@@ -208,8 +203,9 @@ export const MultiStepReportForm: React.FC<MultiStepReportFormProps> = ({ type }
 
       setCreatedItem(itemRecord);
       setCurrentStep(6); // Step 6: Success
-    } catch (err: any) {
-      setGeneralError(err.message || "Failed to submit report. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to submit report. Please try again.";
+      setGeneralError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -335,7 +331,7 @@ export const MultiStepReportForm: React.FC<MultiStepReportFormProps> = ({ type }
           <div>
             <p className="font-bold">Public Data Safety Notice</p>
             <p>
-              Don't include private information such as ID card numbers, full credit card details, phone numbers, or passwords in the public report.
+              Don&apos;t include private information such as ID card numbers, full credit card details, phone numbers, or passwords in the public report.
             </p>
           </div>
         </div>

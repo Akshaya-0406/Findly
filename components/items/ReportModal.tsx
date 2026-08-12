@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, CheckCircle, Flag, AlertTriangle, ShieldAlert } from "lucide-react";
+import { X, CheckCircle, Flag } from "lucide-react";
 import Button from "@/components/ui/button";
 import Select from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db";
-import { ReportReason } from "@/types";
 
 interface ReportModalProps {
   type?: "item" | "user" | "lost" | "found";
@@ -68,8 +67,9 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     try {
       await dbService.createReport(user.id, reportType, targetId, reason, description);
       setIsSubmitted(true);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to submit report. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to submit report. Please try again.";
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
